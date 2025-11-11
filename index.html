@@ -83,22 +83,17 @@
     display: block;
     margin-top: 1rem;
   }
-  textarea {
+  textarea, input[type="text"] {
     width: 100%;
-    min-height: 80px;
-    margin-top: 0.5rem;
     padding: 0.5rem;
     font-size: 1rem;
     border-radius: 5px;
     border: 1px solid #ccc;
-    resize: vertical;
   }
-  input[type="text"] {
-    width: 100%;
-    padding: 0.5rem;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+    margin-top: 0.5rem;
   }
   .small-text {
     font-size: 0.85rem;
@@ -151,6 +146,15 @@
     z-index: 1000;
     user-select: none;
   }
+  #partageSocial button {
+    margin: 0 0.3rem 0.3rem 0.3rem;
+  }
+  #badgesContainer div {
+    font-weight: bold;
+  }
+  li {
+    margin-bottom: 0.5rem;
+  }
 </style>
 </head>
 <body>
@@ -164,6 +168,12 @@
     Chargement du défi...
   </div>
   <button id="nouveauDefi" aria-label="Générer un nouveau défi créatif">Nouveau défi</button>
+
+  <div id="partageSocial" aria-label="Boutons de partage social" style="margin-bottom:1rem;">
+    <button id="shareTwitter" aria-label="Partager sur Twitter">Twitter</button>
+    <button id="shareFacebook" aria-label="Partager sur Facebook">Facebook</button>
+    <button id="shareWhatsApp" aria-label="Partager sur WhatsApp">WhatsApp</button>
+  </div>
 
   <section aria-labelledby="proposer-defi-title" style="width:100%; max-width:700px;">
     <h2 id="proposer-defi-title">Proposez un nouveau défi</h2>
@@ -180,19 +190,33 @@
     </form>
   </section>
 
-  <section style="width:100%; max-width:700px; margin-top:2rem;">
+  <section style="width:100%; max-width:700px; margin-top:2rem;" aria-label="Liste des défis soumis avec votes">
+    <h2>Défis proposés par la communauté</h2>
+    <ul id="defisSubmitList" style="list-style:none; padding-left:0;"></ul>
+  </section>
+
+  <section style="width:100%; max-width:700px; margin-top:2rem;" aria-label="Historique personnel des défis">
     <h2>Votre journal des défis réalisés</h2>
+    <label for="searchHistorique">Rechercher dans votre journal :</label>
+    <input type="text" id="searchHistorique" aria-label="Rechercher dans l'historique des défis" placeholder="Mot-clé à rechercher" style="width:100%; padding:0.5rem; margin-bottom:1rem;">
     <button id="exportJournal" aria-label="Télécharger le journal de vos défis">Exporter en texte</button>
     <ul id="historiqueDefis" aria-live="polite" style="padding-left:1rem;"></ul>
   </section>
 
-  <section style="width:100%; max-width:700px; margin-top:2rem;">
+  <section style="width:100%; max-width:700px; margin-top:2rem;" aria-label="Badges utilisateur">
+    <h2>Vos badges</h2>
+    <div id="badgesContainer" aria-live="polite"></div>
+  </section>
+
+  <section style="width:100%; max-width:700px; margin-top:4rem;">
     <h2>Paramètres de rappel</h2>
     <label for="notifToggle">
       <input type="checkbox" id="notifToggle" />
       Activer le rappel quotidien avec notification
     </label>
   </section>
+
+  <section id="disqus_thread" style="max-width:700px; margin-top:4rem;"></section>
 </main>
 
 <footer>
@@ -202,8 +226,7 @@
 </footer>
 
 <script>
-  // Liste d'environ 365 défis variés (extraits pour exemple)
-  // Le tableau complet est dans la variable 'defis' (à compléter pour 1 an)
+  // Liste de défis (extraits, compléter à 365+)
   const defis = [
     "Dessinez un paysage en 10 minutes avec uniquement des formes géométriques.",
     "Écrivez un haïku sur le thème de la nature.",
@@ -214,25 +237,11 @@
     "Prenez une photo représentant un moment de bonheur aujourd'hui.",
     "Créez un logo minimaliste pour votre futur projet personnel.",
     "Apprenez et reproduisez une danse rapide d’une minute.",
-    "Écoutez un nouveau genre musical et écrivez vos impressions en quelques lignes.",
-    // Ajoutez ici d'autres défis pour totaliser environ 365
+    "Écoutez un nouveau genre musical et écrivez vos impressions en quelques lignes."
   ];
 
-  // Stockage local des défis réalisés
-  let historique = JSON.parse(localStorage.getItem('historiqueDefis2025')) || [];
-
-  const defiElement = document.getElementById("defi");
-  const btnNouveau = document.getElementById("nouveauDefi");
-  const historiqueElement = document.getElementById("historiqueDefis");
-  const form = document.getElementById("defiForm");
-  const defiInput = document.getElementById("defiInput");
-  const captchaInput = document.getElementById("captcha");
-  const formError = document.getElementById("formError");
-  const exportBtn = document.getElementById("exportJournal");
-  const notifToggle = document.getElementById("notifToggle");
-  const darkModeToggle = document.getElementById("dark-mode-toggle");
-
   // Mode sombre toggle & stockage préférence
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
   function loadDarkMode() {
     const mode = localStorage.getItem('darkModeEnabled');
     if (mode === 'true') {
@@ -253,7 +262,31 @@
   });
   loadDarkMode();
 
-  // Affiche un défi aléatoire
+  // Variables DOM
+  const defiElement = document.getElementById("defi");
+  const btnNouveau = document.getElementById("nouveauDefi");
+  const form = document.getElementById("defiForm");
+  const defiInput = document.getElementById("defiInput");
+  const captchaInput = document.getElementById("captcha");
+  const formError = document.getElementById("formError");
+  const defisSubmitList = document.getElementById("defisSubmitList");
+  const historiqueElement = document.getElementById("historiqueDefis");
+  const exportBtn = document.getElementById("exportJournal");
+  const notifToggle = document.getElementById("notifToggle");
+  const badgesContainer = document.getElementById("badgesContainer");
+  const searchHistorique = document.getElementById('searchHistorique');
+
+  // Local storage keys
+  const STORAGE_HISTO = 'historiqueDefis2025';
+  const STORAGE_SUBMIT = 'defisSoumis2025';
+
+  // Historique des défis personnels
+  let historique = JSON.parse(localStorage.getItem(STORAGE_HISTO)) || [];
+
+  // Défis soumis par la communauté, avec votes
+  let defisSoumis = JSON.parse(localStorage.getItem(STORAGE_SUBMIT)) || [];
+
+  // Génération défi aléatoire
   function genererDefi() {
     const index = Math.floor(Math.random() * defis.length);
     return defis[index];
@@ -262,10 +295,10 @@
     const nouveauDefi = genererDefi();
     defiElement.textContent = nouveauDefi;
   }
-
   btnNouveau.addEventListener("click", afficherDefi);
+  afficherDefi();
 
-  // Validation formulaire défis personnalisés
+  // Validation formulaire
   function validerForm() {
     formError.style.display = 'none';
     const texte = defiInput.value.trim();
@@ -282,46 +315,93 @@
     return true;
   }
 
-  // Gestion des défis perso soumis
+  // Ajout défi soumis
+  function ajouterDefiSoumis(text) {
+    defisSoumis.unshift({text: text, votes: 0});
+    localStorage.setItem(STORAGE_SUBMIT, JSON.stringify(defisSoumis));
+    afficherDefisSoumis();
+  }
+
+  // Affichage défis soumis
+  function afficherDefisSoumis() {
+    defisSubmitList.innerHTML = '';
+    if(defisSoumis.length === 0) {
+      defisSubmitList.innerHTML = '<li>Aucun défi soumis pour l\'instant.</li>';
+      return;
+    }
+    defisSoumis.forEach((defi, index) => {
+      const li = document.createElement('li');
+      li.style.marginBottom = '1rem';
+      li.innerHTML = `
+        <div>${defi.text}</div>
+        <button data-index="${index}" class="voteBtn" aria-label="Votez pour ce défi">${defi.votes || 0} 👍</button>
+      `;
+      defisSubmitList.appendChild(li);
+    });
+    // Boutons vote avec écoute
+    document.querySelectorAll('.voteBtn').forEach(btn => {
+      btn.onclick = () => {
+        const i = +btn.dataset.index;
+        defisSoumis[i].votes = (defisSoumis[i].votes || 0) + 1;
+        localStorage.setItem(STORAGE_SUBMIT, JSON.stringify(defisSoumis));
+        afficherDefisSoumis();
+      };
+    });
+  }
+  afficherDefisSoumis();
+
+  // Soumission formulaire modifié
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!validerForm()) return;
-    // Ajoute le défi au début du tableau et stockage local
+    ajouterDefiSoumis(defiInput.value.trim());
+
+    // Ajout aussi dans historique perso
     historique.unshift(defiInput.value.trim());
-    localStorage.setItem('historiqueDefis2025', JSON.stringify(historique));
+    localStorage.setItem(STORAGE_HISTO, JSON.stringify(historique));
+    afficherHistorique();
+    updateBadges();
+
     defiInput.value = "";
     captchaInput.value = "";
     formError.style.display = 'none';
-    afficherHistorique();
     alert("Merci pour votre contribution !");
   });
 
-  // Afficher historique des défis
-  function afficherHistorique() {
-    historiqueElement.innerHTML = "";
-    if(historique.length === 0) {
+  // Afficher historique perso
+  function afficherHistorique(filter = '') {
+    historiqueElement.innerHTML = '';
+    let filtered = historique;
+    if(filter.length > 0){
+      filtered = historique.filter(d => d.toLowerCase().includes(filter.toLowerCase()));
+    }
+    if(filtered.length === 0) {
       const li = document.createElement('li');
-      li.textContent = "Aucun défi encore réalisé ou ajouté.";
+      li.textContent = filter.length > 0 ? "Aucun défi ne correspond à votre recherche." : "Aucun défi encore réalisé ou ajouté.";
       historiqueElement.appendChild(li);
       return;
     }
-    historique.forEach((d, i) => {
+    filtered.forEach((d) => {
       const li = document.createElement('li');
       li.textContent = d;
       historiqueElement.appendChild(li);
     });
   }
-
   afficherHistorique();
 
-  // Exporter le journal au format texte
+  // Recherche dans historique
+  searchHistorique.addEventListener('input', () => {
+    afficherHistorique(searchHistorique.value);
+  });
+
+  // Export du journal perso
   exportBtn.addEventListener("click", () => {
     if(historique.length === 0) {
       alert("Votre journal est vide.");
       return;
     }
-    const texte = historique.map((d, i) => `${i+1}. ${d}`).join("\n");
-    const blob = new Blob([texte], {type: 'text/plain'});
+    const texteExport = historique.map((d, i) => `${i+1}. ${d}`).join("\n");
+    const blob = new Blob([texteExport], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -332,7 +412,59 @@
     URL.revokeObjectURL(url);
   });
 
-  // Notifications rappel - demande permission et création notification
+  // Badges gamifiés
+  function updateBadges() {
+    badgesContainer.innerHTML = '';
+    const nbDefis = historique.length;
+    const badges = [];
+
+    if(nbDefis >= 5) badges.push('Novice - 5 défis réalisés');
+    if(nbDefis >= 20) badges.push('Apprenti - 20 défis réalisés');
+    if(nbDefis >= 50) badges.push('Expert - 50 défis réalisés');
+    if(nbDefis >= 100) badges.push('Maître - 100 défis réalisés');
+    if(nbDefis >= 200) badges.push('Légende - 200 défis réalisés');
+
+    if(badges.length === 0) {
+      badgesContainer.textContent = "Aucun badge pour le moment, continuez à relever des défis !";
+    } else {
+      badges.forEach(badge => {
+        const div = document.createElement('div');
+        div.textContent = `🏅 ${badge}`;
+        div.style.padding = '0.5rem';
+        div.style.backgroundColor = '#d4f4dd';
+        div.style.borderRadius = '5px';
+        div.style.marginBottom = '0.3rem';
+        badgesContainer.appendChild(div);
+      });
+    }
+  }
+  updateBadges();
+
+  // Partage réseaux sociaux
+  const shareTwitter = document.getElementById('shareTwitter');
+  const shareFacebook = document.getElementById('shareFacebook');
+  const shareWhatsApp = document.getElementById('shareWhatsApp');
+
+  function encode(text) {
+    return encodeURIComponent(text);
+  }
+
+  shareTwitter.addEventListener('click', () => {
+    const url = `https://twitter.com/intent/tweet?text=${encode('Défi du jour : ' + defiElement.textContent)}`;
+    window.open(url, '_blank', 'noopener');
+  });
+
+  shareFacebook.addEventListener('click', () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encode(window.location.href)}&quote=${encode('Défi du jour : ' + defiElement.textContent)}`;
+    window.open(url, '_blank', 'noopener');
+  });
+
+  shareWhatsApp.addEventListener('click', () => {
+    const url = `https://api.whatsapp.com/send?text=${encode('Défi du jour : ' + defiElement.textContent + ' - ' + window.location.href)}`;
+    window.open(url, '_blank', 'noopener');
+  });
+
+  // Notifications rappel - demande permission et notifications
   function showNotification() {
     if(Notification.permission === "granted") {
       new Notification("Défi créatif du jour", {
@@ -352,10 +484,8 @@
           }
         });
       }
-      // Stockage préférence
       localStorage.setItem('notifEnabled', "true");
-      // Programmez notification pour 24h avec setTimeout (site doit être ouvert)
-      setTimeout(showNotification, 1000 * 60 * 60 * 24);
+      setTimeout(showNotification, 1000 * 60 * 60 * 24); // 24h
     } else {
       localStorage.setItem('notifEnabled', "false");
     }
@@ -366,11 +496,20 @@
     notifToggle.checked = true; 
   }
 
-  // Affichage initial du défi
-  afficherDefi();
+  // Intégration Disqus - chat modéré
+  var disqus_config = function () {
+      this.page.url = window.location.href;
+      this.page.identifier = window.location.pathname;
+  };
+  (function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://VOTRE_ID_DISQUS.disqus.com/embed.js'; // Remplacez par votre ID Disqus ici
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
 
 </script>
 
+<noscript>Veuillez activer JavaScript pour voir les commentaires.</noscript>
 </body>
 </html>
-
