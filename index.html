@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Défi Créatif Quotidien - Avancé</title>
+<style>
+  :root {
+    --primary-color: #2a9d8f;
+    --accent-color: #e76f51;
+    --background-light: #f0f4f8;
+    --text-color-light: #264653;
+    --background-dark: #1e1e1e;
+    --text-color-dark: #e0e0e0;
+    --btn-bg: var(--primary-color);
+    --btn-hover-bg: #217373;
+  }
+  body {
+    margin: 0; font-family: 'Arial', sans-serif;
+    background: var(--background-light);
+    color: var(--text-color-light);
+    display: flex; flex-direction: column; min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark-mode {
+    background: var(--background-dark);
+    color: var(--text-color-dark);
+  }
+  header {
+    background: var(--primary-color); color: white; padding: 1rem; text-align: center;
+    font-weight: bold; font-size: 1.5rem;
+  }
+  main {
+    flex-grow: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 2rem 1rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  #defi {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+    padding: 2rem;
+    width: 100%;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    min-height: 100px;
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark-mode #defi {
+    background: #333;
+    color: var(--text-color-dark);
+  }
+  button, input[type="submit"] {
+    background-color: var(--btn-bg);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 1rem;
+  }
+  button:hover, input[type="submit"]:hover {
+    background-color: var(--btn-hover-bg);
+  }
+  form {
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  body.dark-mode form {
+    background: #333;
+    color: var(--text-color-dark);
+  }
+  label {
+    display: block;
+    margin-top: 1rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    resize: vertical;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  .small-text {
+    font-size: 0.85rem;
+    color: #666;
+  }
+  .error {
+    color: red;
+    margin-top: 0.2rem;
+  }
+  footer {
+    background: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+  a.don-link {
+    color: var(--accent-color);
+    font-weight: bold;
+    text-decoration: none;
+  }
+  a.don-link:hover, a.don-link:focus {
+    text-decoration: underline;
+  }
+  .footer-text {
+    margin: 0.5rem 0;
+  }
+  @media (max-width: 600px) {
+    #defi {
+      font-size: 1rem;
+      padding: 1.2rem;
+    }
+    button, input[type="submit"] {
+      width: 100%;
+    }
+    form {
+      padding: 1rem;
+    }
+  }
+  #dark-mode-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--btn-bg);
+    border: none;
+    color: white;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    z-index: 1000;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<header>Défi Créatif Quotidien - Avancé</header>
+
+<button id="dark-mode-toggle" aria-pressed="false" aria-label="Activer ou désactiver le mode sombre">Mode sombre</button>
+
+<main>
+  <div id="defi" aria-live="polite" aria-atomic="true" tabindex="0">
+    Chargement du défi...
+  </div>
+  <button id="nouveauDefi" aria-label="Générer un nouveau défi créatif">Nouveau défi</button>
+
+  <section aria-labelledby="proposer-defi-title" style="width:100%; max-width:700px;">
+    <h2 id="proposer-defi-title">Proposez un nouveau défi</h2>
+    <form id="defiForm" novalidate>
+      <label for="defiInput">Votre défi (5 à 150 caractères) <span aria-hidden="true">*</span></label>
+      <textarea id="defiInput" name="defiInput" required minlength="5" maxlength="150" aria-describedby="defiHelp"></textarea>
+      <div id="defiHelp" class="small-text">Soyez créatif et clair.</div>
+      <div id="formError" class="error" role="alert" aria-live="assertive" style="display:none;"></div>
+      <label for="captcha">Combien font 3 + 2 ? <span aria-hidden="true">*</span></label>
+      <input type="text" id="captcha" name="captcha" required aria-describedby="captchaHelp" />
+      <div id="captchaHelp" class="small-text">Pour prouver que vous n'êtes pas un robot.</div>
+
+      <input type="submit" value="Envoyer" aria-label="Soumettre votre défi" />
+    </form>
+  </section>
+
+  <section style="width:100%; max-width:700px; margin-top:2rem;">
+    <h2>Votre journal des défis réalisés</h2>
+    <button id="exportJournal" aria-label="Télécharger le journal de vos défis">Exporter en texte</button>
+    <ul id="historiqueDefis" aria-live="polite" style="padding-left:1rem;"></ul>
+  </section>
+
+  <section style="width:100%; max-width:700px; margin-top:2rem;">
+    <h2>Paramètres de rappel</h2>
+    <label for="notifToggle">
+      <input type="checkbox" id="notifToggle" />
+      Activer le rappel quotidien avec notification
+    </label>
+  </section>
+</main>
+
+<footer>
+  <p class="footer-text">Si vous aimez ce site, vous pouvez soutenir mon travail :</p>
+  <p><a href="https://www.paypal.com/donate?hosted_button_id=VOTRE_ID_DON" target="_blank" rel="noopener noreferrer" class="don-link" aria-label="Page de dons PayPal">Faire un don ici</a></p>
+  <p class="footer-text">© 2025 - Tous droits réservés</p>
+</footer>
+
+<script>
+  // Liste d'environ 365 défis variés (extraits pour exemple)
+  // Le tableau complet est dans la variable 'defis' (à compléter pour 1 an)
+  const defis = [
+    "Dessinez un paysage en 10 minutes avec uniquement des formes géométriques.",
+    "Écrivez un haïku sur le thème de la nature.",
+    "Créez une mini histoire en 3 phrases avec un début, milieu et fin.",
+    "Inventez une recette avec trois ingrédients que vous avez chez vous.",
+    "Fabriquez un origami simple et donnez-lui un nom unique.",
+    "Programmez un script qui affiche la date et l'heure actuelles dans la console.",
+    "Prenez une photo représentant un moment de bonheur aujourd'hui.",
+    "Créez un logo minimaliste pour votre futur projet personnel.",
+    "Apprenez et reproduisez une danse rapide d’une minute.",
+    "Écoutez un nouveau genre musical et écrivez vos impressions en quelques lignes.",
+    // Ajoutez ici d'autres défis pour totaliser environ 365
+  ];
+
+  // Stockage local des défis réalisés
+  let historique = JSON.parse(localStorage.getItem('historiqueDefis2025')) || [];
+
+  const defiElement = document.getElementById("defi");
+  const btnNouveau = document.getElementById("nouveauDefi");
+  const historiqueElement = document.getElementById("historiqueDefis");
+  const form = document.getElementById("defiForm");
+  const defiInput = document.getElementById("defiInput");
+  const captchaInput = document.getElementById("captcha");
+  const formError = document.getElementById("formError");
+  const exportBtn = document.getElementById("exportJournal");
+  const notifToggle = document.getElementById("notifToggle");
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+  // Mode sombre toggle & stockage préférence
+  function loadDarkMode() {
+    const mode = localStorage.getItem('darkModeEnabled');
+    if (mode === 'true') {
+      document.body.classList.add('dark-mode');
+      darkModeToggle.setAttribute('aria-pressed', 'true');
+      darkModeToggle.textContent = "Mode clair";
+    } else {
+      document.body.classList.remove('dark-mode');
+      darkModeToggle.setAttribute('aria-pressed', 'false');
+      darkModeToggle.textContent = "Mode sombre";
+    }
+  }
+  darkModeToggle.addEventListener('click', () => {
+    const active = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkModeEnabled', active);
+    darkModeToggle.setAttribute('aria-pressed', active.toString());
+    darkModeToggle.textContent = active ? "Mode clair" : "Mode sombre";
+  });
+  loadDarkMode();
+
+  // Affiche un défi aléatoire
+  function genererDefi() {
+    const index = Math.floor(Math.random() * defis.length);
+    return defis[index];
+  }
+  function afficherDefi() {
+    const nouveauDefi = genererDefi();
+    defiElement.textContent = nouveauDefi;
+  }
+
+  btnNouveau.addEventListener("click", afficherDefi);
+
+  // Validation formulaire défis personnalisés
+  function validerForm() {
+    formError.style.display = 'none';
+    const texte = defiInput.value.trim();
+    if (texte.length < 5 || texte.length > 150) {
+      formError.textContent = "Le défi doit contenir entre 5 et 150 caractères.";
+      formError.style.display = 'block';
+      return false;
+    }
+    if (captchaInput.value.trim() !== '5') {
+      formError.textContent = "Le résultat du captcha est incorrect.";
+      formError.style.display = 'block';
+      return false;
+    }
+    return true;
+  }
+
+  // Gestion des défis perso soumis
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!validerForm()) return;
+    // Ajoute le défi au début du tableau et stockage local
+    historique.unshift(defiInput.value.trim());
+    localStorage.setItem('historiqueDefis2025', JSON.stringify(historique));
+    defiInput.value = "";
+    captchaInput.value = "";
+    formError.style.display = 'none';
+    afficherHistorique();
+    alert("Merci pour votre contribution !");
+  });
+
+  // Afficher historique des défis
+  function afficherHistorique() {
+    historiqueElement.innerHTML = "";
+    if(historique.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = "Aucun défi encore réalisé ou ajouté.";
+      historiqueElement.appendChild(li);
+      return;
+    }
+    historique.forEach((d, i) => {
+      const li = document.createElement('li');
+      li.textContent = d;
+      historiqueElement.appendChild(li);
+    });
+  }
+
+  afficherHistorique();
+
+  // Exporter le journal au format texte
+  exportBtn.addEventListener("click", () => {
+    if(historique.length === 0) {
+      alert("Votre journal est vide.");
+      return;
+    }
+    const texte = historique.map((d, i) => `${i+1}. ${d}`).join("\n");
+    const blob = new Blob([texte], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'journal_defis_2025.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // Notifications rappel - demande permission et création notification
+  function showNotification() {
+    if(Notification.permission === "granted") {
+      new Notification("Défi créatif du jour", {
+        body: defiElement.textContent,
+        icon: "https://cdn-icons-png.flaticon.com/512/686/686308.png"
+      });
+    }
+  }
+
+  notifToggle.addEventListener("change", () => {
+    if (notifToggle.checked) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+          if(permission !== "granted") {
+            notifToggle.checked = false;
+            alert("Notification non autorisée.");
+          }
+        });
+      }
+      // Stockage préférence
+      localStorage.setItem('notifEnabled', "true");
+      // Programmez notification pour 24h avec setTimeout (site doit être ouvert)
+      setTimeout(showNotification, 1000 * 60 * 60 * 24);
+    } else {
+      localStorage.setItem('notifEnabled', "false");
+    }
+  });
+
+  // Charger préférence notifications
+  if(localStorage.getItem('notifEnabled') === "true") {
+    notifToggle.checked = true; 
+  }
+
+  // Affichage initial du défi
+  afficherDefi();
+
+</script>
+
+</body>
+</html>
